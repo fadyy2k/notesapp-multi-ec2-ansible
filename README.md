@@ -22,9 +22,6 @@ v
 |
 [ Notes DB API (Flask + Gunicorn + SQLite) ]
 
-yaml
-Copy code
-
 ---
 
 ## 🧩 Components
@@ -62,10 +59,6 @@ notesapp-multi-ec2/
 ├── playbook-db-backup.yml
 ├── ansible.cfg
 └── README.md
-
-yaml
-Copy code
-
 ---
 
 ## 🚀 Deployment Steps
@@ -87,28 +80,18 @@ bash
 Copy code
 ansible-playbook playbook-db.yml
 Verify:
-
-bash
-Copy code
 curl http://DB_PRIVATE_IP:5000/health
+
 3️⃣ Configure DB Backups
-bash
-Copy code
 ansible-playbook playbook-db-backup.yml
 Manual test:
-
-bash
-Copy code
 sudo /usr/local/bin/notesdb-backup.sh
+
 4️⃣ Deploy Application UI
-bash
-Copy code
 ansible-playbook playbook-app.yml
 Open in browser:
-
-cpp
-Copy code
 http://APP_PUBLIC_IP
+
 🔁 API Endpoints (DB)
 Method	Endpoint	Description
 GET	/health	Health check
