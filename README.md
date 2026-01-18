@@ -1,149 +1,146 @@
-# NotesApp – Multi EC2 Deployment with Ansible (AWS)
+# NotesApp – Multi-EC2 Deployment with Ansible on AWS
 
-A production-style **Flask Notes Application** deployed on **AWS EC2** using **Ansible**, following DevOps best practices:
-- Separate EC2 instances for **Application UI** and **Database API**
-- Automated provisioning and configuration
-- Backup strategy for SQLite database
-- Nginx + Gunicorn setup
-- Private networking between services
+A production-ready **Notes Application** deployed on AWS using **Ansible**, demonstrating a clean **multi-tier architecture** with separate EC2 instances for the **UI** and **Database API**, automated backups, and a modern Flask + Nginx stack.
+
+This project is designed as a **DevOps / Cloud engineering showcase**, focusing on automation, separation of concerns, and operational best practices.
 
 ---
 
-## 🏗 Architecture
+## 🧠 Project Overview
 
-Internet
-|
-v
-[ Nginx ]
-|
-[ NotesApp UI (Flask + Gunicorn) ]
-|
-(private VPC traffic)
-|
-[ Notes DB API (Flask + Gunicorn + SQLite) ]
+**NotesApp** allows users to create, edit, and delete notes through a web interface.  
+Behind the scenes, the system is split into multiple layers:
+
+- **App EC2**: Flask UI + Gunicorn + Nginx  
+- **DB EC2**: Flask REST API + SQLite  
+- **Automation**: Ansible roles & playbooks  
+- **Backups**: Automated SQLite backups with retention
+
+No manual server configuration is required after provisioning.
 
 ---
 
-## 🧩 Components
+## 🏗️ Architecture
 
-### 1️⃣ Control Node
-- Amazon Linux EC2
-- Ansible installed
-- Manages all deployments
+User Browser  
+→ Nginx (App EC2)  
+→ Flask UI (Gunicorn)  
+→ Flask DB API (DB EC2)  
+→ SQLite Database  
+→ Automated Backups
 
-### 2️⃣ App EC2 (UI)
-- Flask frontend
+---
+
+## ⚙️ Tech Stack
+
+- AWS EC2 (Amazon Linux 2023)
+- Ansible
+- Flask
 - Gunicorn
-- Nginx (reverse proxy)
-- Communicates with DB API via private IP
-
-### 3️⃣ DB EC2 (API)
-- Flask REST API
-- SQLite database
-- Gunicorn
-- Daily compressed backups via cron
+- Nginx
+- SQLite
+- Systemd
+- Cron
 
 ---
 
 ## 📁 Repository Structure
 
-notesapp-multi-ec2/
+```
+notesapp-multi-ec2-ansible/
 ├── inventory/
-│ ├── hosts.ini.example
 ├── roles/
-│ ├── app_ui/
-│ ├── db_api/
-│ ├── db_backup/
+│   ├── app_ui/
+│   ├── db_api/
+│   └── db_backup/
 ├── playbook-app.yml
 ├── playbook-db.yml
 ├── playbook-db-backup.yml
-├── ansible.cfg
-└── README.md
+└── ansible.cfg
+```
+
 ---
 
 ## 🚀 Deployment Steps
 
-### 1️⃣ Prepare inventory
+### 1. Clone Repository
+
 ```bash
-cp inventory/hosts.ini.example inventory/hosts.ini
-nano inventory/hosts.ini
-Set:
+git clone https://github.com/fadyy2k/notesapp-multi-ec2-ansible.git
+cd notesapp-multi-ec2-ansible
+```
 
-DB private IP
+### 2. Configure Inventory
 
-App private IP
+Edit `inventory/hosts.ini` with your EC2 private IPs.
 
-SSH key path
+### 3. Deploy Database API
 
-2️⃣ Deploy Database API
-bash
-Copy code
+```bash
 ansible-playbook playbook-db.yml
-Verify:
-curl http://DB_PRIVATE_IP:5000/health
+```
 
-3️⃣ Configure DB Backups
+### 4. Configure Backups
+
+```bash
 ansible-playbook playbook-db-backup.yml
-Manual test:
-sudo /usr/local/bin/notesdb-backup.sh
+```
 
-4️⃣ Deploy Application UI
+### 5. Deploy App UI
+
+```bash
 ansible-playbook playbook-app.yml
-Open in browser:
-http://APP_PUBLIC_IP
+```
 
-🔁 API Endpoints (DB)
-Method	Endpoint	Description
-GET	/health	Health check
-GET	/notes	List notes
-POST	/notes	Add note
-GET	/notes/<id>	Get note
-PUT	/notes/<id>	Update note
-DELETE	/notes/<id>	Delete note
+Open the app in your browser using the App EC2 public IP.
 
-💾 Backup Strategy
-Daily cron backup at 08:00
+---
 
-Location: /var/backups/notesdb
+## 🔌 API Endpoints
 
-Format: notesdb_YYYYMMDD_HHMMSS.db.gz
+- `GET /health`
+- `GET /notes`
+- `POST /notes`
+- `PUT /notes/<id>`
+- `DELETE /notes/<id>`
 
-Retention: last 14 backups
+---
 
-🔐 Security Notes
-DB API is accessed via private VPC IP
+## 💾 Backup Strategy
 
-SSH access restricted via Security Groups
+- Daily SQLite backup
+- Gzip compression
+- 14-day retention
+- Stored under `/var/backups/notesdb`
 
-No database exposed publicly
+---
 
-Nginx terminates HTTP traffic
+## 🔐 Security Notes
 
-🧠 DevOps Concepts Demonstrated
-Infrastructure automation (Ansible)
+- DB API accessible only via private IP
+- UI is the only public-facing service
+- SSH key-based authentication
+- No shared storage
 
-Multi-tier architecture
+---
 
-Service isolation
+## 📌 Future Improvements
 
-Systemd services
+- HTTPS (Let’s Encrypt)
+- CI/CD with GitHub Actions
+- Authentication
+- RDS migration
+- Terraform provisioning
 
-Backup & recovery
+---
 
-Reverse proxy
+## 👤 Author
 
-Zero-downtime restarts
+**Fady Mounir**  
+GitHub: https://github.com/fadyy2k
 
-📌 Future Improvements
-HTTPS (ACM + ALB)
+---
 
-Authentication & users
+## 📄 License
 
-Monitoring (Prometheus / CloudWatch)
-
-CI/CD (GitHub Actions)
-
-Database migration to RDS
-
-👤 Author
-Fady Mounir
+MIT License
