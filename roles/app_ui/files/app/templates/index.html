@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notes App</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f1a2f; --card:#111f3a;
+      --text:#e8eefc; --muted:#a9b6d3; --line:#223156;
+      --accent:#6ea8fe; --danger:#ff6b6b; --ok:#3ddc97;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 800px at 10% 10%, #142654 0%, var(--bg) 50%) fixed;
+      color:var(--text);
+    }
+    .wrap{max-width:980px; margin:34px auto; padding:0 16px;}
+    .top{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+    h1{margin:0; font-size:28px; letter-spacing:.2px;}
+    .sub{color:var(--muted); font-size:14px; margin-top:6px;}
+    .pill{display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border:1px solid var(--line);
+      border-radius:999px; background:rgba(255,255,255,.04); color:var(--muted); font-size:13px;}
+    .grid{display:grid; grid-template-columns: 1.15fr .85fr; gap:16px;}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line); border-radius:var(--radius); box-shadow: var(--shadow);
+      padding:14px;
+    }
+    .panel h2{margin:0 0 10px 0; font-size:16px; color:var(--muted); font-weight:600;}
+    .row{display:flex; gap:10px; align-items:center;}
+    .row.wrap{flex-wrap:wrap}
+    input[type="text"], textarea, select{
+      width:100%;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+    }
+    textarea{min-height:110px; resize:vertical;}
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    .btn:hover{background:rgba(255,255,255,.08); border-color:#2b3c66;}
+    .btn:active{transform: translateY(1px);}
+    .btn.primary{background: rgba(110,168,254,.18); border-color: rgba(110,168,254,.35);}
+    .btn.danger{background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.35);}
+    .btn.ghost{background: transparent;}
+    .hint{color:var(--muted); font-size:12px; margin-top:8px;}
+
+    .toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;}
+    .toolbar .grow{flex:1}
+    .cards{display:flex; flex-direction:column; gap:10px;}
+    .card{
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .meta{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;}
+    .ts{color:var(--muted); font-size:12px;}
+    .content{margin-top:8px; line-height:1.35;}
+    .actions{display:flex; gap:8px; align-items:center;}
+    .badge{font-size:12px; color:var(--muted); border:1px solid var(--line); padding:4px 8px; border-radius:999px; background:rgba(255,255,255,.03);}
+
+    .empty{
+      border:1px dashed var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    /* Modal */
+    .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px;}
+    .modal{max-width:640px; width:100%; background:var(--panel); border:1px solid var(--line); border-radius:18px; box-shadow: var(--shadow); padding:14px;}
+    .modal h3{margin:0 0 10px 0; font-size:16px; color:var(--text);}
+    .modal .footer{display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;}
+    .modal small{color:var(--muted);}
+
+    /* Toast */
+    .toast{position:fixed; right:16px; bottom:16px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 12px; box-shadow: var(--shadow); display:none; max-width:360px;}
+    .toast .t{font-weight:600; font-size:13px;}
+    .toast .m{color:var(--muted); font-size:12px; margin-top:4px;}
+    .toast.ok{border-color: rgba(61,220,151,.35);}
+    .toast.err{border-color: rgba(255,107,107,.35);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Notes App</h1>
+        <div class="sub">UI server renders notes from the DB API (separate EC2).</div>
+      </div>
+      <div class="pill">
+        <span>DB API:</span>
+        <strong id="dbbase">{{ (config.get("DB_API_BASE") or "internal") if false else "" }}</strong>
+        <span class="badge">Two-tier</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: Notes list -->
+      <div class="panel">
+        <h2>Notes</h2>
+
+        <div class="toolbar">
+          <div class="grow">
+            <input id="q" type="text" placeholder="Search notes..." autocomplete="off" />
+          </div>
+          <select id="sort">
+            <option value="desc" selected>Newest first</option>
+            <option value="asc">Oldest first</option>
+          </select>
+          <button class="btn ghost" id="clear">Clear</button>
+        </div>
+
+        <div class="cards" id="cards">
+          {% if notes and notes|length > 0 %}
+            {% for n in notes %}
+              <div class="card" data-id="{{ n.id }}" data-content="{{ n.content|e }}" data-created="{{ n.created_at|e }}">
+                <div class="meta">
+                  <div class="ts">🕒 <span class="tsVal">{{ n.created_at }}</span> • ID <span class="idVal">{{ n.id }}</span></div>
+                  <div class="actions">
+                    <button class="btn" data-action="edit">Edit</button>
+                    <button class="btn danger" data-action="del">Delete</button>
+                  </div>
+                </div>
+                <div class="content">📌 <span class="contentVal">{{ n.content }}</span></div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty">
+              <div style="font-size:18px; margin-bottom:6px;">No notes yet</div>
+              <div>Add your first note on the right ✨</div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="hint">Tip: Click <b>Edit</b> to update a note (no page reload).</div>
+      </div>
+
+      <!-- Right: Add note -->
+      <div class="panel">
+        <h2>Add a new note</h2>
+        <form method="post" action="/add" id="addForm">
+          <textarea name="content" id="newContent" placeholder="Write something..." required></textarea>
+          <div class="row wrap" style="margin-top:10px;">
+            <button class="btn primary" type="submit">Add note</button>
+            <button class="btn ghost" type="button" id="demo">Add demo note</button>
+          </div>
+          <div class="hint">This submits to the UI server, which posts JSON to the DB API.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBack">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <h3 id="mTitle">Edit note</h3>
+      <textarea id="editText"></textarea>
+      <div class="row wrap" style="margin-top:8px; justify-content:space-between;">
+        <small id="editMeta"></small>
+      </div>
+      <div class="footer">
+        <button class="btn" id="cancelBtn">Cancel</button>
+        <button class="btn primary" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="t" id="toastT"></div>
+    <div class="m" id="toastM"></div>
+  </div>
+
+<script>
+  const cardsEl = document.getElementById('cards');
+  const qEl = document.getElementById('q');
+  const sortEl = document.getElementById('sort');
+  const clearEl = document.getElementById('clear');
+
+  const modalBack = document.getElementById('modalBack');
+  const editText = document.getElementById('editText');
+  const editMeta = document.getElementById('editMeta');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
+  const toast = document.getElementById('toast');
+  const toastT = document.getElementById('toastT');
+  const toastM = document.getElementById('toastM');
+
+  let currentEditId = null;
+
+  function showToast(type, title, msg){
+    toast.classList.remove('ok','err');
+    toast.classList.add(type === 'ok' ? 'ok' : 'err');
+    toastT.textContent = title;
+    toastM.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(()=> toast.style.display = 'none', 2200);
+  }
+
+  function getCards(){
+    return Array.from(cardsEl.querySelectorAll('.card'));
+  }
+
+  function applyFilterSort(){
+    const q = (qEl.value || '').trim().toLowerCase();
+    const dir = sortEl.value;
+
+    const cards = getCards();
+
+    // filter
+    cards.forEach(c => {
+      const content = (c.dataset.content || '').toLowerCase();
+      const created = (c.dataset.created || '').toLowerCase();
+      const id = (c.dataset.id || '').toLowerCase();
+      const ok = !q || content.includes(q) || created.includes(q) || id.includes(q);
+      c.style.display = ok ? '' : 'none';
+    });
+
+    // sort (by id numeric)
+    cards.sort((a,b)=>{
+      const ai = parseInt(a.dataset.id, 10);
+      const bi = parseInt(b.dataset.id, 10);
+      return dir === 'asc' ? (ai - bi) : (bi - ai);
+    }).forEach(c => cardsEl.appendChild(c));
+  }
+
+  qEl?.addEventListener('input', applyFilterSort);
+  sortEl?.addEventListener('change', applyFilterSort);
+  clearEl?.addEventListener('click', ()=>{
+    qEl.value = '';
+    sortEl.value = 'desc';
+    applyFilterSort();
+  });
+
+  function openModal(id, content, createdAt){
+    currentEditId = id;
+    editText.value = content || '';
+    editMeta.textContent = `ID ${id} • ${createdAt || ''}`;
+    modalBack.style.display = 'flex';
+    editText.focus();
+  }
+  function closeModal(){
+    modalBack.style.display = 'none';
+    currentEditId = null;
+  }
+  cancelBtn.addEventListener('click', closeModal);
+  modalBack.addEventListener('click', (e)=>{
+    if(e.target === modalBack) closeModal();
+  });
+
+  saveBtn.addEventListener('click', async ()=>{
+    const id = currentEditId;
+    const content = (editText.value || '').trim();
+    if(!id) return;
+    if(!content){
+      showToast('err','Validation','Content cannot be empty.');
+      return;
+    }
+    try{
+      const res = await fetch(`/api/note/${id}`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({content})
+      });
+      const data = await res.json();
+      if(!res.ok){
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
+      const card = cardsEl.querySelector(`.card[data-id="${id}"]`);
+      if(card){
+        card.dataset.content = content;
+        card.querySelector('.contentVal').textContent = content;
+      }
+      showToast('ok','Saved','Note updated successfully.');
+      closeModal();
+      applyFilterSort();
+    }catch(err){
+      showToast('err','Update failed', String(err));
+    }
+  });
+
+  cardsEl?.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+
+    const card = e.target.closest('.card');
+    if(!card) return;
+
+    const id = card.dataset.id;
+    const action = btn.dataset.action;
+
+    if(action === 'edit'){
+      // Fetch fresh content (optional), then open modal
+      try{
+        const res = await fetch(`/api/note/${id}`);
+        const data = await res.json();
+        if(res.ok){
+          openModal(id, data.content, data.created_at);
+        } else {
+          openModal(id, card.dataset.content, card.dataset.created);
+        }
+      }catch{
+        openModal(id, card.dataset.content, card.dataset.created);
+      }
+    }
+
+    if(action === 'del'){
+      if(!confirm(`Delete note ID ${id}?`)) return;
+      try{
+        const res = await fetch(`/delete/${id}`, { method: 'POST' });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        card.remove();
+        showToast('ok','Deleted','Note removed.');
+      }catch(err){
+        showToast('err','Delete failed', String(err));
+      }
+    }
+  });
+
+  // Demo note
+  document.getElementById('demo')?.addEventListener('click', ()=>{
+    const t = new Date().toISOString().replace('T',' ').slice(0,19);
+    document.getElementById('newContent').value = `Demo note @ ${t}`;
+  });
+
+  // Initial apply
+  applyFilterSort();
+</script>
+</body>
+</html>

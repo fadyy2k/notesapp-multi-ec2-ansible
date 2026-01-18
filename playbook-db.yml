@@ -1,0 +1,5 @@
+- name: Deploy Notes DB API on DB EC2
+  hosts: db
+  become: true
+  roles:
+    - db_api

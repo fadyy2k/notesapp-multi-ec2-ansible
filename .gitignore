@@ -1,0 +1,16 @@
+# Ansible
+*.retry
+inventory/hosts.ini
+
+# SSH keys
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store

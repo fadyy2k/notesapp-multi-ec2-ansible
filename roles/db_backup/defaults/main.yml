@@ -1,0 +1,5 @@
+db_backup_dir: /var/backups/notesdb
+db_path: /opt/notesdb/data/notes.db
+db_backup_keep: 14
+db_backup_hour: 8
+db_backup_minute: 0

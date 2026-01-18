@@ -1,0 +1,13 @@
+app_user: notesapp
+app_group: notesapp
+
+app_root: /opt/notesapp
+app_app_dir: "{{ app_root }}/app"
+app_venv: "{{ app_root }}/venv"
+
+app_bind: "127.0.0.1:8000"
+
+# DB API (private IP)
+db_api_base: "http://172.31.39.132:5000"
+
+nginx_conf_path: /etc/nginx/conf.d/notesapp.conf

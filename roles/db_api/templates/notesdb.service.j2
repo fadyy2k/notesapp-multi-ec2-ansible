@@ -1,0 +1,16 @@
+[Unit]
+Description=Notes DB API (Flask + Gunicorn + SQLite)
+After=network.target
+
+[Service]
+Type=simple
+User={{ dbapi_user }}
+Group={{ dbapi_group }}
+WorkingDirectory={{ dbapi_app_dir }}
+Environment=DB_PATH={{ dbapi_db_path }}
+ExecStart={{ dbapi_venv }}/bin/gunicorn -w 2 -b {{ dbapi_bind }} app:app
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

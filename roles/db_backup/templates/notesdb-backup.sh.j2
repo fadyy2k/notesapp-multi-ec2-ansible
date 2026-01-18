@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DB="{{ db_path }}"
+BACKUP_DIR="{{ db_backup_dir }}"
+KEEP="{{ db_backup_keep }}"
+
+ts="$(date +%Y%m%d_%H%M%S)"
+out="${BACKUP_DIR}/notesdb_${ts}.db.gz"
+
+install -d -m 0750 "$BACKUP_DIR"
+
+if [[ ! -f "$DB" ]]; then
+  echo "DB not found: $DB"
+  exit 1
+fi
+
+tmp="$(mktemp)"
+cp -a "$DB" "$tmp"
+gzip -c "$tmp" > "$out"
+rm -f "$tmp"
+
+# keep last N backups
+ls -1t "${BACKUP_DIR}"/notesdb_*.db.gz 2>/dev/null | tail -n +$((KEEP+1)) | xargs -r rm -f
+
+echo "Backup created: $out"

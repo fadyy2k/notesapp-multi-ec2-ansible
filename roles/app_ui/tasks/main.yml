@@ -1,0 +1,81 @@
+- name: Install OS packages
+  ansible.builtin.dnf:
+    name:
+      - python3
+      - python3-pip
+      - nginx
+    state: present
+    update_cache: true
+
+- name: Ensure notesapp group exists
+  ansible.builtin.group:
+    name: "{{ app_group }}"
+    state: present
+
+- name: Ensure notesapp user exists
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    group: "{{ app_group }}"
+    system: true
+    create_home: false
+    shell: /sbin/nologin
+
+- name: Create app directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+  loop:
+    - "{{ app_root }}"
+    - "{{ app_app_dir }}"
+
+- name: Copy application files
+  ansible.builtin.copy:
+    src: app/
+    dest: "{{ app_app_dir }}/"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0644"
+  notify: Restart notesapp
+
+- name: Create python venv
+  ansible.builtin.command: "python3 -m venv {{ app_venv }}"
+  args:
+    creates: "{{ app_venv }}/bin/activate"
+
+- name: Install python requirements
+  ansible.builtin.pip:
+    requirements: "{{ app_app_dir }}/requirements.txt"
+    virtualenv: "{{ app_venv }}"
+    virtualenv_command: "python3 -m venv"
+  notify: Restart notesapp
+
+- name: Render systemd service
+  ansible.builtin.template:
+    src: notesapp.service.j2
+    dest: /etc/systemd/system/notesapp.service
+    mode: "0644"
+  notify:
+    - Systemd daemon-reload
+    - Restart notesapp
+
+- name: Render nginx vhost
+  ansible.builtin.template:
+    src: nginx-notesapp.conf.j2
+    dest: "{{ nginx_conf_path }}"
+    mode: "0644"
+  notify: Restart nginx
+
+- name: Ensure nginx is enabled and running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Ensure notesapp is enabled and running
+  ansible.builtin.service:
+    name: notesapp
+    state: started
+    enabled: true

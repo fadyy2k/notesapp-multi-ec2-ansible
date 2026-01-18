@@ -1,0 +1,35 @@
+- name: Install cron package
+  ansible.builtin.dnf:
+    name: cronie
+    state: present
+    update_cache: true
+
+- name: Ensure cron service is enabled and running
+  ansible.builtin.service:
+    name: crond
+    state: started
+    enabled: true
+
+- name: Create backup directory
+  ansible.builtin.file:
+    path: "{{ db_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Install backup script
+  ansible.builtin.template:
+    src: notesdb-backup.sh.j2
+    dest: /usr/local/bin/notesdb-backup.sh
+    mode: "0750"
+    owner: root
+    group: root
+
+- name: Setup daily cron backup
+  ansible.builtin.cron:
+    name: "NotesDB SQLite backup"
+    user: root
+    minute: "{{ db_backup_minute }}"
+    hour: "{{ db_backup_hour }}"
+    job: "/usr/local/bin/notesdb-backup.sh >>/var/log/notesdb-backup.log 2>&1"

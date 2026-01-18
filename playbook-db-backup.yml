@@ -1,0 +1,5 @@
+- name: Configure NotesDB backup strategy
+  hosts: db
+  become: true
+  roles:
+    - db_backup

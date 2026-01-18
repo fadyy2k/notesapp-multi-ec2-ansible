@@ -1,0 +1,69 @@
+- name: Install OS packages
+  ansible.builtin.dnf:
+    name:
+      - python3
+      - python3-pip
+    state: present
+    update_cache: true
+
+- name: Ensure notesdb group exists
+  ansible.builtin.group:
+    name: "{{ dbapi_group }}"
+    state: present
+
+- name: Ensure notesdb user exists
+  ansible.builtin.user:
+    name: "{{ dbapi_user }}"
+    group: "{{ dbapi_group }}"
+    system: true
+    create_home: false
+    shell: /sbin/nologin
+
+- name: Create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ dbapi_user }}"
+    group: "{{ dbapi_group }}"
+    mode: "0755"
+  loop:
+    - "{{ dbapi_root }}"
+    - "{{ dbapi_app_dir }}"
+    - "{{ dbapi_data_dir }}"
+
+- name: Copy app files
+  ansible.builtin.copy:
+    src: app/
+    dest: "{{ dbapi_app_dir }}/"
+    owner: "{{ dbapi_user }}"
+    group: "{{ dbapi_group }}"
+    mode: "0644"
+  notify: Restart notesdb
+
+- name: Create python venv
+  ansible.builtin.command: "python3 -m venv {{ dbapi_venv }}"
+  args:
+    creates: "{{ dbapi_venv }}/bin/activate"
+
+- name: Install requirements
+  ansible.builtin.pip:
+    requirements: "{{ dbapi_app_dir }}/requirements.txt"
+    virtualenv: "{{ dbapi_venv }}"
+    virtualenv_command: "python3 -m venv"
+  notify: Restart notesdb
+
+- name: Install systemd unit
+  ansible.builtin.template:
+    src: notesdb.service.j2
+    dest: /etc/systemd/system/notesdb.service
+    mode: "0644"
+  notify:
+    - Systemd daemon-reload
+    - Restart notesdb
+
+- name: Ensure notesdb is enabled and running
+  ansible.builtin.service:
+    name: notesdb
+    state: started
+    enabled: true
+

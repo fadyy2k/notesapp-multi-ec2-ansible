@@ -1,0 +1,16 @@
+[Unit]
+Description=Notes App UI (Flask + Gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_app_dir }}
+Environment=DB_API_BASE={{ db_api_base }}
+ExecStart={{ app_venv }}/bin/gunicorn -w 2 -b {{ app_bind }} app:app
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

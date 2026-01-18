@@ -1,0 +1,5 @@
+[db]
+notesapp-db ansible_host=DB_PRIVATE_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/KEY.pem
+
+[app]
+notesapp-app ansible_host=APP_PRIVATE_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/KEY.pem

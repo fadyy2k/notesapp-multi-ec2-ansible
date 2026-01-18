@@ -1,0 +1,8 @@
+- name: Systemd daemon-reload
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart notesdb
+  ansible.builtin.service:
+    name: notesdb
+    state: restarted

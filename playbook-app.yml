@@ -1,0 +1,5 @@
+- name: Deploy Notes App UI on APP EC2
+  hosts: app
+  become: true
+  roles:
+    - app_ui

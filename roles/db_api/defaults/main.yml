@@ -1,0 +1,10 @@
+dbapi_user: notesdb
+dbapi_group: notesdb
+
+dbapi_root: /opt/notesdb
+dbapi_app_dir: "{{ dbapi_root }}/app"
+dbapi_venv: "{{ dbapi_root }}/venv"
+dbapi_data_dir: "{{ dbapi_root }}/data"
+dbapi_db_path: "{{ dbapi_data_dir }}/notes.db"
+
+dbapi_bind: "0.0.0.0:5000"
