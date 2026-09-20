@@ -1,0 +1,33 @@
+name: Ansible CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "inventory/**"
+      - ".github/workflows/ansible-ci.yml"
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Ansible
+        run: python -m pip install --upgrade pip ansible-core
+      - name: Validate playbooks
+        run: |
+          ansible-playbook -i inventory/hosts.ini.example playbook-app.yml --syntax-check
+          ansible-playbook -i inventory/hosts.ini.example playbook-db.yml --syntax-check
+          ansible-playbook -i inventory/hosts.ini.example playbook-db-backup.yml --syntax-check
