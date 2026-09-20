@@ -4,6 +4,7 @@
 ![AWS](https://img.shields.io/badge/AWS-EC2-orange)
 ![Flask](https://img.shields.io/badge/Flask-Python-blue)
 ![Nginx](https://img.shields.io/badge/Nginx-Reverse%20Proxy-green)
+[![Ansible CI](https://github.com/fadyy2k/notesapp-multi-ec2-ansible/actions/workflows/ansible-ci.yml/badge.svg)](https://github.com/fadyy2k/notesapp-multi-ec2-ansible/actions/workflows/ansible-ci.yml)
 
 A **production-style training lab** demonstrating how to deploy a simple Notes application across **multiple AWS EC2 instances** using **Ansible**, following best practices for service separation, automation, and verification.
 
